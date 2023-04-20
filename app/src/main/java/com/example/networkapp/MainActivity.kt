@@ -1,7 +1,11 @@
 package com.example.networkapp
 
+import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -40,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         comicImageView = findViewById<ImageView>(R.id.comicImageView)
 
 
-        var file = File(filesDir, internalFilename)
+         file = File(filesDir, internalFilename)
 
         if (file != null) {
             try {
@@ -61,7 +65,21 @@ class MainActivity : AppCompatActivity() {
         showButton.setOnClickListener {
             downloadComic(numberEditText.text.toString())
         }
+
+        if (intent?.action == Intent.ACTION_VIEW){
+            intent.data?.path?.run{
+              downloadComic(split("/")[1])
+            }
+        }
+
+        findViewById<Button>(R.id.button).setOnClickListener{
+           val intent  = Intent(
+               Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
+                Uri.parse("package:${packageName}"))
+            startActivity(intent)
+        }
     }
+
 
     private fun downloadComic (comicId: String) {
         val url = "https://xkcd.com/$comicId/info.0.json"
@@ -69,14 +87,11 @@ class MainActivity : AppCompatActivity() {
             JsonObjectRequest(url,  {
                 val output =FileOutputStream(file)
                 output.write(it.toString().toByteArray())
-
                 showComic(it)}, {
             })
-
         )
+
     }
-
-
 
     private fun showComic (comicObject: JSONObject) {
         titleTextView.text = comicObject.getString("title")
